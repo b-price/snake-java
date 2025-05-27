@@ -11,7 +11,6 @@ public class Game {
     private Board board;
     private Snake snake;
     private Scanner scan;
-    private int speed;
     private long interval; // milliseconds between moves
     private volatile boolean inputThreadRunning = false;
     private Thread inputThread;
