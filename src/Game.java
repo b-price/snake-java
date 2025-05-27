@@ -11,6 +11,11 @@ public class Game {
     private Board board;
     private Snake snake;
     private Scanner scan;
+    private int speed;
+    private long interval; // milliseconds between moves
+    private volatile boolean inputThreadRunning = false;
+    private Thread inputThread;
+
 
     public Game(){
         time = 0;
@@ -33,27 +38,42 @@ public class Game {
         scan = new Scanner(System.in);
     }
 
+    public void setSpeed(int s) {
+        speed = s;
+        // Calculate interval: 2000ms for speed 1, 200ms for speed 10
+        interval = 2000 - (speed - 1) * 200;
+    }
+
     public void start(){
         initialize();
         System.out.println("~~~S~~N~~A~~K~~E~~~");
-        char move;
+        System.out.println("Speed set to: " + speed + " (interval: " + interval + "ms)");
         snake = new Snake(board.getX_length(), board.getY_length());
         gameover = false;
         board.setBoard();
         board.setFlag(snake.getSegments());
         board.setFruit();
         board.displayBoard();
+
+        // Start input handling thread
+        startInputThread();
+
         while(!gameover){
+            try {
+                Thread.sleep(interval);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
             Point lastTail = new Point(snake.getTail());
-            System.out.println("Enter move (WASD): ");
-            move = scan.next().charAt(0);
-            snake.setDirection(move);
             snake.move();
             time++;
+
             if(hitWall() || board.getCell(snake.getHead()).snakeHere()){
                 gameover = true;
                 System.out.println("YOU LOSE!");
                 displayStats();
+                stopInputThread();
                 break;
             }
             else if(board.getCell(snake.getHead()).fruitHere()){
@@ -66,6 +86,29 @@ public class Game {
             board.setFlag(snake.getSegments());
             displayStats();
             board.displayBoard();
+        }
+        stopInputThread();
+    }
+
+    private void startInputThread() {
+        inputThreadRunning = true;
+        inputThread = new Thread(() -> {
+            Scanner inputScanner = new Scanner(System.in);
+            while (inputThreadRunning && !gameover) {
+                if (inputScanner.hasNext()) {
+                    char move = inputScanner.next().charAt(0);
+                    snake.setDirection(move);
+                }
+            }
+            inputScanner.close();
+        });
+        inputThread.start();
+    }
+
+    private void stopInputThread() {
+        inputThreadRunning = false;
+        if (inputThread != null && inputThread.isAlive()) {
+            inputThread.interrupt();
         }
     }
 
