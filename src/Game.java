@@ -50,10 +50,22 @@ public class Game {
         System.out.println("~~~S~~N~~A~~K~~E~~~");
 
         // Get speed from player
-        System.out.println("Set game speed (1-10, 1=slowest, 10=fastest): ");
-        speed = scan.nextInt();
-        if (speed < MIN_SPEED) speed = MIN_SPEED;
-        if (speed > MAX_SPEED) speed = MAX_SPEED;
+        boolean valid = false;
+
+        while (!valid) {
+            System.out.println("Set game speed (1-10, 1=slowest, 10=fastest): ");
+            if (scan.hasNextInt()){
+                speed = scan.nextInt();
+                if (speed >= MIN_SPEED && speed <= MAX_SPEED){
+                    valid = true;
+                } else {
+                    System.out.println("Speed must be between 1 and 10!");
+                }
+            } else {
+                scan.next();
+                System.out.println("Please enter an integer between 1 and 10!");
+            }
+        }
 
         // Calculate delay in milliseconds based on speed
         int delayMs = MAX_DELAY_MS - ((speed - 1) * (MAX_DELAY_MS - MIN_DELAY_MS) / (MAX_SPEED - 1));
@@ -63,7 +75,7 @@ public class Game {
         board.setBoard();
         board.setFlag(snake.getSegments());
         board.setFruit();
-        board.displayBoard();
+        //board.displayBoard();
 
         System.out.println("Game started! Use WASD keys to change direction.");
         System.out.println("Snake will move automatically every " + delayMs + "ms");
